@@ -37,9 +37,10 @@ def is_prefix_code(codewords):
 
 def kraft_sum(codewords):
     """
-    Computes the Kraft sum: sum( 2^(-len(w)) for w in codewords ).
+    Computes the Kraft sum: sum( r^(-len(w)) for w in codewords ).
     """
-    return sum(2 ** (-len(w)) for w in codewords)
+    r = set([word for word in codewords])
+    return sum(len(r) ** (-len(w)) for w in codewords)
 
 def is_huffman_code(codewords):
     """
