@@ -1,7 +1,10 @@
 # Data Compression Tools
 
-This repository provides a set of Python scripts covering different data compression techniques.
-They were developed to assist in the study of _Técnicas de Compresión de Datos_.
+This repository provides a set of Python scripts covering different data
+compression techniques.
+
+They were developed to assist in the study of _Técnicas de Compresión de
+Datos_.
 
 ---
 
@@ -20,14 +23,20 @@ They were developed to assist in the study of _Técnicas de Compresión de Datos
 
 ## Overview
 
-Each script demonstrates a different aspect of data compression. Some scripts can **compress** and **decompress** textual data, others analyze code properties (prefix, Huffman, unique decodability), and another builds a static Huffman code for a given input string. All of them can be run from the command line.
+Each script demonstrates a different aspect of data compression. Some scripts
+can **compress** and **decompress** textual data, others analyze code
+properties (prefix, Huffman, unique decodability), and other build a static
+Huffman code for a given input string.
+
+Except for `huffman_gui.py`, which displays a window, all of them run fully
+from the terminal.
 
 ---
 
 ## Requirements
 
 - Python 3.6+
-- The libraries listed in **requirements.txt** (primarily **tabulate** and **anytree** for displaying purposes).
+- The libraries listed in **requirements.txt**.
 
 To install all dependencies:
 
@@ -39,20 +48,42 @@ To install all dependencies:
 
 ## Scripts
 
-### Huffman
+### Huffman (CLI)
 
 - **File**: `huffman.py`
 - **Description**:
-  Builds a static Huffman code from the frequencies of symbols in a given string.
-  Can also display the code, the frequency/probability table, average code length, and entropy.
+  Builds a static Huffman code from the frequencies of symbols in a given
+  string. Can also display the code, the frequency/probability table, average
+  code length, and entropy.
 
 **Usage:**
 ```bash
     python3 huffman.py [--explain] "YOUR_STRING"
 ```
 
-If `--explain` is provided, it prints detailed information (frequencies, probabilities, assigned codes, entropy, etc.).
+If `--explain` is provided, it prints detailed information (frequencies,
+probabilities, assigned codes, entropy, etc.).
 
+---
+
+### Huffman (GUI)
+
+- **File**: `huffman_gui.py`
+- **Description**:
+  Interactively builds a static Huffman code from the frequencies of symbols in
+  a given string.  It also displays the resulting code, the frequency table,
+  average code length, and entropy.
+
+  It can do it step by step, or automatically or all at once, and it can be
+  configured to work the classic Huffman way (using a heap, ensuring in each
+  step the roots are sorted; or minimizing the number of reorders, which is the
+  preferred strategy when doing it by hand to avoid having to rewrite the tree
+  too often).
+
+**Usage:**
+```bash
+    python3 huffman_gui.py
+```
 ---
 
 ### Code Analyzer
