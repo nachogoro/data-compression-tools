@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from fractions import Fraction
 
 
 def parse_codewords(input_string):
@@ -37,23 +38,30 @@ def is_prefix_code(codewords):
 
 def kraft_sum(codewords):
     """
-    Computes the Kraft sum: sum( r^(-len(w)) for w in codewords ).
+    Computes the Kraft sum exactly:
+    sum( r^(-len(w)) for w in codewords ), using rational arithmetic.
     """
-    r = set([word for word in codewords])
-    return sum(len(r) ** (-len(w)) for w in codewords)
+    r = set(c for word in codewords for c in word)
+    radix = len(r)
+
+    if radix == 0:
+        return Fraction(0, 1)
+
+    return sum(
+        Fraction(1, radix ** len(w))
+        for w in codewords
+    )
 
 def is_huffman_code(codewords):
     """
-    Check if the codewords satisfy Kraft's inequality with equality (=1).
-    By the typical convention, if the sum == 1, it's a 'full' code (can be a Huffman code).
+    Check if the codewords satisfy Kraft's inequality with equality (= 1)
+    using exact fraction checking.
     """
     ksum = kraft_sum(codewords)
-    # We'll do a small tolerance check for floating point rounding, though strictly "equals" was requested.
-    # Adjust if you want exact integer fraction checking.
-    tol = 1e-12
-    equals_one = abs(ksum - 1.0) < tol
-    print(f"Kraft sum = {ksum:.12g}; equals 1 => {equals_one}")
+    equals_one = (ksum == Fraction(1, 1))
+    print(f"Kraft sum = {ksum}; equals 1 => {equals_one}")
     return equals_one
+
 
 def sardinas_patterson(codewords):
     """
