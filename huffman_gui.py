@@ -12,6 +12,7 @@ class HuffmanNode:
         self.freq = freq  # Frequency
         self.left = left  # Left child
         self.right = right  # Right child
+        self.text = None
 
 
 # A class that associates a HuffmanNode with its visual representation.
@@ -111,15 +112,15 @@ class HuffmanGUI:
         self.frequency_distribution = {}
         self.playing = False
 
-        text = self.input_entry.get().strip()
-        if not text:
+        self.text = self.input_entry.get().strip()
+        if not self.text:
             messagebox.showwarning("Warning", "Please enter a non-empty string.")
             return
 
         # Compute frequency distribution.
         freq = {}
-        total = len(text)
-        for ch in text:
+        total = len(self.text)
+        for ch in self.text:
             freq[ch] = freq.get(ch, 0) + 1
         self.frequency_distribution = freq
 
@@ -505,30 +506,93 @@ class HuffmanGUI:
 
     def update_results(self, codes):
         """Update the result panel with a table of symbols, frequencies, codes, code lengths,
-           plus the entropy and average code length.
+           plus the entropy and average code length, including the grouped operations that
+           produce them.
         """
         total = sum(self.frequency_distribution.values())
+
+        # Precompute first occurrence of each symbol in self.text
+        first_occurrence = {}
+        for i, ch in enumerate(self.text):
+            if ch not in first_occurrence:
+                first_occurrence[ch] = i
+
+        # Sorting key:
+        # 1) decreasing frequency
+        # 2) increasing code length
+        # 3) increasing first occurrence in self.text
+        def sort_key(symbol):
+            freq = self.frequency_distribution[symbol]
+            code_len = len(codes.get(symbol, ""))
+            first_idx = first_occurrence.get(symbol, float("inf"))
+            return (-freq, code_len, first_idx)
+
+        symbols_sorted = sorted(self.frequency_distribution.keys(), key=sort_key)
+
+        # --- Build table and also collect grouping data ---
         lines = []
         header = f"{'Symbol':^8} | {'Freq':^8} | {'Code':^12} | {'Len':^5}"
         separator = "-" * len(header)
         lines.append(header)
         lines.append(separator)
+
         avg_length = 0.0
         entropy = 0.0
-        for symbol in sorted(self.frequency_distribution.keys()):
+
+        # Grouping:
+        # Avg length groups: (freq, length) -> count
+        avg_groups = {}
+        # Entropy groups: freq -> count
+        ent_groups = {}
+
+        for symbol in symbols_sorted:
             freq = self.frequency_distribution[symbol]
             p = freq / total
             code = codes.get(symbol, "")
             length = len(code)
+
             avg_length += p * length
             if p > 0:
                 entropy -= p * math.log2(p)
+
+            avg_groups[(freq, length)] = avg_groups.get((freq, length), 0) + 1
+            ent_groups[freq] = ent_groups.get(freq, 0) + 1
+
             freq_str = f"{freq}/{total}"
             lines.append(f"{symbol:^8} | {freq_str:^8} | {code:^12} | {length:^5}")
+
         lines.append(separator)
-        lines.append(f"Entropy: {entropy:.4f} bits/symbol")
-        lines.append(f"Avg code length: {avg_length:.4f} bits/symbol")
+
+        # --- Build grouped operation strings ---
+        def join_terms(terms):
+            return " + ".join(terms) if terms else "0"
+
+        # Average length expression: group by (freq, length)
+        # term format: [k·]freq/total·length   (k omitted if 1)
+        avg_terms = []
+        # Sort groups in a sensible, stable way: freq desc, length asc
+        for (freq, length), k in sorted(avg_groups.items(),
+                                        key=lambda item: (-item[0][0], item[0][1])):
+            prefix = f"{k}·" if k > 1 else ""
+            avg_terms.append(f"{prefix}{freq}/{total}·{length}")
+        avg_expr = join_terms(avg_terms)
+
+        # Entropy expression: group by freq
+        # term format: [k·](-freq/total·log2(freq/total))  (k omitted if 1)
+        # Note: entropy is sum of these positive contributions.
+        ent_terms = []
+        for freq, k in sorted(ent_groups.items(), key=lambda item: -item[0]):
+            p_str = f"{freq}/{total}"
+            prefix = f"{k}·" if k > 1 else ""
+            ent_terms.append(f"{prefix}(-{p_str}·log2({p_str}))")
+        ent_expr = join_terms(ent_terms)
+
+        # --- Append operation + result ---
+        lines.append(f"Entropy: {ent_expr} = {entropy:.4f} bits/symbol")
+        lines.append(f"Avg code length: {avg_expr} = {avg_length:.4f} bits/symbol")
+
         result_str = "\n".join(lines)
+
         self.result_text.config(state=tk.NORMAL)
         self.result_text.delete(1.0, tk.END)
         self.result_text.insert(tk.END, result_str)
